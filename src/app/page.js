@@ -1,95 +1,48 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+"use client"; // This is a client component 👈🏽
 
+import { useCallback, useRef, useState } from "react";
+import useBookSearch from "./useBookSearch"
 export default function Home() {
+
+  const [query , setQuery] = useState();
+  const [pageNumber , setPageNumber]  = useState();
+  const { error , books , hasMore , loading } = useBookSearch(query,pageNumber);
+  const observer = useRef()
+  const lastBookElementRef = useCallback(node=>{
+    if(loading) return
+    if(observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if(entries[0].isIntersecting && hasMore){
+        setPageNumber(prevPageNumber => prevPageNumber+1)
+      }
+      
+    })
+    if(node) observer.current.observe(node)
+  });
+
+  function handleSearch(e){
+    setQuery(e.target.value);
+    setPageNumber(1)
+  }
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    <main>
+      <input type="text" value={query} onChange={handleSearch}/>
+      <p>
+        {
+          books.map((book,index) => {
+            if(book.length === index+1){
+              return <div ref={lastBookElementRef} key={book}>{book}</div>
+            }else{
+              return <div key={book}>{book}</div>
+            }
+          })
+        }
+      </p>
+      <p>{loading && 'Loading.....'}</p>
+      <p>{error && 'Error..........'}</p>
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
     </main>
   )
 }
